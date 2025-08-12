@@ -17,6 +17,23 @@ export default function SensorCard({ sensor, onDelete }: SensorCardProps) {
   const [deleting, setDeleting] = useState(false)
   const supabase = createClient()
 
+  const fetchSensorData = async () => {
+    try {
+      const { data } = await supabase
+        .from('sensor_data')
+        .select('*')
+        .eq('sensor_id', sensor.id)
+        .order('timestamp', { ascending: false })
+        .limit(50)
+
+      setSensorData(data || [])
+    } catch (error) {
+      console.error('Error fetching sensor data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchSensorData()
     
@@ -40,24 +57,7 @@ export default function SensorCard({ sensor, onDelete }: SensorCardProps) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [sensor.id, supabase]) // Added missing dependencies
-
-  const fetchSensorData = async () => {
-    try {
-      const { data } = await supabase
-        .from('sensor_data')
-        .select('*')
-        .eq('sensor_id', sensor.id)
-        .order('timestamp', { ascending: false })
-        .limit(50)
-
-      setSensorData(data || [])
-    } catch (error) {
-      console.error('Error fetching sensor data:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [sensor.id, supabase])
 
   const handleDelete = async () => {
     if (!confirm(`Weet je zeker dat je sensor "${sensor.name}" wilt verwijderen? Dit verwijdert ook alle data.`)) {
