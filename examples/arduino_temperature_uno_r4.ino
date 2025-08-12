@@ -30,8 +30,10 @@ const char* ssid = "JouwWiFiNaam";
 const char* password = "JouwWiFiWachtwoord";
 
 // Jouw IoT Dashboard Platform configuratie
-const char* server = "192.168.1.100";  // Pas aan naar jouw IP (zonder http://)
-const int port = 3000;
+const char* server = "192.168.88.155";  // Voor lokaal gebruik
+// const char* server = "jouw-app-naam.vercel.app";  // Voor productie (uncomment deze regel)
+// const int port = 443;  // Voor HTTPS productie
+const int port = 3000;  // Voor lokaal HTTP
 const char* apiPath = "/api/sensor-data";
 const char* apiKey = "a131a412-72ea-42cd-892d-32b58cc138fd";  // Jouw sensor API key
 

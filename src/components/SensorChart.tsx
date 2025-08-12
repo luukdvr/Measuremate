@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useRef } from 'react'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,6 +11,7 @@ import {
   Tooltip,
   Legend,
   TimeScale,
+  TooltipItem,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 import { SensorData } from '@/types/database'
@@ -76,12 +77,12 @@ export default function SensorChart({ data }: SensorChartProps) {
       },
       tooltip: {
         callbacks: {
-          title: function(context: any) {
+          title: function(context: TooltipItem<'line'>[]) {
             const index = context[0].dataIndex
             const timestamp = sortedData[index].timestamp
             return format(new Date(timestamp), 'dd/MM/yyyy HH:mm', { locale: nl })
           },
-          label: function(context: any) {
+          label: function(context: TooltipItem<'line'>) {
             return `Waarde: ${context.parsed.y.toFixed(2)}`
           },
         },

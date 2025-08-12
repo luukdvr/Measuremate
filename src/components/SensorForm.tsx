@@ -47,7 +47,7 @@ export default function SensorForm({ onSensorAdded, onCancel }: SensorFormProps)
       } else if (data) {
         onSensorAdded(data)
       }
-    } catch (err) {
+    } catch {
       setError('Er is een onverwachte fout opgetreden')
     } finally {
       setLoading(false)

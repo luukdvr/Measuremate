@@ -40,7 +40,7 @@ export default function SensorCard({ sensor, onDelete }: SensorCardProps) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [sensor.id])
+  }, [sensor.id, supabase]) // Added missing dependencies
 
   const fetchSensorData = async () => {
     try {

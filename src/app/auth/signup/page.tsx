@@ -12,7 +12,6 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
-  const router = useRouter()
   const supabase = createClient()
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -46,7 +45,7 @@ export default function SignUp() {
       } else {
         setSuccess(true)
       }
-    } catch (err) {
+    } catch {
       setError('Er is een onverwachte fout opgetreden')
     } finally {
       setLoading(false)

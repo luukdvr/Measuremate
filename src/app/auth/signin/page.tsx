@@ -30,7 +30,7 @@ export default function SignIn() {
         router.push('/dashboard')
         router.refresh()
       }
-    } catch (err) {
+    } catch {
       setError('Er is een onverwachte fout opgetreden')
     } finally {
       setLoading(false)
