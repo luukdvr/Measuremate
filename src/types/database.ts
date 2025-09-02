@@ -7,6 +7,11 @@ export interface Database {
           user_id: string
           name: string
           api_key: string
+          scale: number | null
+          scaleMin: number | null
+          tijdScale: string | null
+          alert_threshold: number | null
+          alert_lower_threshold: number | null
           created_at: string
           updated_at: string
         }
@@ -15,6 +20,11 @@ export interface Database {
           user_id: string
           name: string
           api_key?: string
+          scale?: number | null
+          scaleMin?: number | null
+          tijdScale?: string | null
+          alert_threshold?: number | null
+          alert_lower_threshold?: number | null
           created_at?: string
           updated_at?: string
         }
@@ -23,6 +33,11 @@ export interface Database {
           user_id?: string
           name?: string
           api_key?: string
+          scale?: number | null
+          scaleMin?: number | null
+          tijdScale?: string | null
+          alert_threshold?: number | null
+          alert_lower_threshold?: number | null
           created_at?: string
           updated_at?: string
         }

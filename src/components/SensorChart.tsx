@@ -5,8 +5,8 @@ import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  PointElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
@@ -14,29 +14,35 @@ import {
   TooltipItem,
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
-import { SensorData } from '@/types/database'
 import { format } from 'date-fns'
 import { nl } from 'date-fns/locale'
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  PointElement,
   LineElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
   TimeScale
 )
 
+interface ChartPoint { timestamp: string; value: number | null }
+
 interface SensorChartProps {
-  data: SensorData[]
+  data: ChartPoint[]
+  yMax?: number
+  yMin?: number
+  xFormat?: string
+  thresholdUpper?: number
+  thresholdLower?: number
 }
 
-export default function SensorChart({ data }: SensorChartProps) {
-  const chartRef = useRef<ChartJS<'line', number[], string>>(null)
+export default function SensorChart({ data, yMax, yMin, xFormat = 'HH:mm:ss', thresholdUpper, thresholdLower }: SensorChartProps) {
+  const chartRef = useRef<ChartJS<'line', (number | null)[], string>>(null)
 
-  // Sort data by timestamp and reverse to show oldest first
+  // Sort data by timestamp ascending
   const sortedData = [...data].sort((a, b) => 
     new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   )
@@ -51,26 +57,56 @@ export default function SensorChart({ data }: SensorChartProps) {
 
   const chartData = {
     labels: sortedData.map(item => 
-      format(new Date(item.timestamp), 'HH:mm', { locale: nl })
+      format(new Date(item.timestamp), xFormat, { locale: nl })
     ),
     datasets: [
       {
         label: 'Waarde',
-        data: sortedData.map(item => item.value),
+  data: sortedData.map(item => item.value),
         borderColor: 'rgb(79, 70, 229)',
         backgroundColor: 'rgba(79, 70, 229, 0.1)',
         borderWidth: 2,
         fill: true,
         tension: 0.4,
-        pointRadius: 3,
-        pointHoverRadius: 5,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+  spanGaps: true,
       },
+      ...(typeof thresholdUpper === 'number' ? [{
+        label: 'Bovengrens',
+        data: new Array(sortedData.length).fill(thresholdUpper),
+        borderColor: 'rgba(220, 38, 38, 1)', // red-600
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        fill: false,
+        tension: 0,
+        borderDash: [6, 4],
+      }] : []),
+      ...(typeof thresholdLower === 'number' ? [{
+        label: 'Ondergrens',
+        data: new Array(sortedData.length).fill(thresholdLower),
+        borderColor: 'rgba(249, 115, 22, 1)', // orange-500
+        borderWidth: 1.5,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        fill: false,
+        tension: 0,
+        borderDash: [4, 4],
+      }] : []),
     ],
   }
 
   const options = {
     responsive: true,
     maintainAspectRatio: false,
+    elements: {
+      point: {
+        radius: 0,
+        hoverRadius: 0,
+        hitRadius: 8,
+      },
+    },
     plugins: {
       legend: {
         display: false,
@@ -108,6 +144,8 @@ export default function SensorChart({ data }: SensorChartProps) {
         grid: {
           color: 'rgba(0, 0, 0, 0.1)',
         },
+  min: typeof yMin === 'number' ? yMin : undefined,
+        max: typeof yMax === 'number' ? yMax : undefined,
       },
     },
     interaction: {

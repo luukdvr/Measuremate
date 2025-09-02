@@ -12,6 +12,7 @@ interface SensorFormProps {
 
 export default function SensorForm({ onSensorAdded, onCancel }: SensorFormProps) {
   const [name, setName] = useState('')
+  const [scale, setScale] = useState('') // New state for scale (string input)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
@@ -32,12 +33,20 @@ export default function SensorForm({ onSensorAdded, onCancel }: SensorFormProps)
 
       const apiKey = uuidv4()
 
+      const scaleNumber = scale.trim() === '' ? null : Number(scale)
+      if (scaleNumber !== null && Number.isNaN(scaleNumber)) {
+        setError('Ongeldige schaalwaarde')
+        setLoading(false)
+        return
+      }
+
       const { data, error: insertError } = await supabase
         .from('sensors')
         .insert({
           user_id: user.id,
           name: name.trim(),
           api_key: apiKey,
+          scale: scaleNumber,
         })
         .select()
         .single()
@@ -71,6 +80,18 @@ export default function SensorForm({ onSensorAdded, onCancel }: SensorFormProps)
             placeholder="Bijv. Temperatuur Woonkamer"
             value={name}
             onChange={(e) => setName(e.target.value)}
+          />
+          <label htmlFor="sensorScale" className="block text-sm font-medium text-gray-700">
+            Sensor Schaal
+          </label>
+          <input
+            type="number"
+            id="sensorScale"
+            required
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            placeholder="Bijv. 100 (max y-as)"
+            value={scale}
+            onChange={(e) => setScale(e.target.value)}
           />
         </div>
 
