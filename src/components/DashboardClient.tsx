@@ -32,13 +32,6 @@ export default function DashboardClient({ user, initialSensors }: DashboardClien
     }
   }, [selectedMeasuremate, sensors])
 
-  // Laad alle sensors opnieuw wanneer er een nieuwe Measuremate wordt geselecteerd
-  useEffect(() => {
-    if (selectedMeasuremate) {
-      loadSensorsForMeasuremate(selectedMeasuremate.id)
-    }
-  }, [selectedMeasuremate])
-
   const loadSensorsForMeasuremate = async (measuremateId: string) => {
     try {
       const { data, error } = await supabase
@@ -59,6 +52,13 @@ export default function DashboardClient({ user, initialSensors }: DashboardClien
       console.error('Error loading sensors for measuremate:', error)
     }
   }
+
+  // Laad alle sensors opnieuw wanneer er een nieuwe Measuremate wordt geselecteerd
+  useEffect(() => {
+    if (selectedMeasuremate) {
+      loadSensorsForMeasuremate(selectedMeasuremate.id)
+    }
+  }, [selectedMeasuremate, user.id])
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()

@@ -25,12 +25,6 @@ export default function MeasuremateSelector({ user, selectedMeasuremateName, onM
     location: ''
   })
 
-  useEffect(() => {
-    if (user) {
-      loadMeasuremates()
-    }
-  }, [user])
-
   const loadMeasuremates = async () => {
     if (!user) return
     
@@ -56,6 +50,12 @@ export default function MeasuremateSelector({ user, selectedMeasuremateName, onM
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (user) {
+      loadMeasuremates()
+    }
+  }, [user, selectedMeasuremateName, onMeasuremateSelect])
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -213,7 +213,7 @@ export default function MeasuremateSelector({ user, selectedMeasuremateName, onM
       {measuremates.length === 0 && !showCreateForm && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <p className="mb-2">Nog geen Measuremates aangemaakt.</p>
-          <p className="text-sm">Klik op "Nieuwe Measuremate" om te beginnen.</p>
+          <p className="text-sm">Klik op &quot;Nieuwe Measuremate&quot; om te beginnen.</p>
         </div>
       )}
     </div>

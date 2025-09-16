@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Sensor, SensorData } from '@/types/database'
 import SensorChart from './SensorChart'
@@ -24,7 +24,7 @@ export default function SensorCard({ sensor, onDelete }: SensorCardProps) {
   // Stable base URL for examples (same on server and client)
   const exampleBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || ''
 
-  const fetchSensorData = async () => {
+  const fetchSensorData = useCallback(async () => {
     try {
       const { data } = await supabase
         .from('sensor_data')
@@ -39,7 +39,7 @@ export default function SensorCard({ sensor, onDelete }: SensorCardProps) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [sensor.id, supabase])
 
   useEffect(() => {
     fetchSensorData()
@@ -64,7 +64,7 @@ export default function SensorCard({ sensor, onDelete }: SensorCardProps) {
     return () => {
       subscription.unsubscribe()
     }
-  }, [sensor.id, supabase])
+  }, [sensor.id, supabase, fetchSensorData])
 
   const handleDelete = async () => {
     if (!confirm(`Weet je zeker dat je sensor "${sensor.name}" wilt verwijderen? Dit verwijdert ook alle data.`)) {
