@@ -15,12 +15,23 @@ interface SensorWithMeasuremate {
 
 // Helper function to check thresholds and send notifications
 async function checkThresholdsAndNotify(sensor: SensorWithMeasuremate, currentValue: number) {
+  console.log('🎯 ENTERED checkThresholdsAndNotify function')
+  
   try {
     // Only check if thresholds are set
     const upperThreshold = sensor.alert_threshold
     const lowerThreshold = sensor.alert_lower_threshold
     
+    console.log('📊 Threshold values:', { 
+      upper: upperThreshold, 
+      lower: lowerThreshold, 
+      current: currentValue,
+      upperType: typeof upperThreshold,
+      currentType: typeof currentValue 
+    })
+    
     if (!upperThreshold && !lowerThreshold) {
+      console.log('⚠️ No thresholds set - exiting')
       return // No thresholds set
     }
 
@@ -174,6 +185,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Check thresholds and trigger notifications if needed
+    console.log('🧪 About to check thresholds for:', {
+      sensorName: sensor.name,
+      value,
+      upperThreshold: sensor.alert_threshold,
+      lowerThreshold: sensor.alert_lower_threshold
+    })
+    
     await checkThresholdsAndNotify(sensor, value)
 
     return NextResponse.json({
@@ -184,6 +202,13 @@ export async function POST(request: NextRequest) {
         sensor_name: sensor.name,
         value: value,
         timestamp: recordTimestamp,
+      },
+      debugInfo: {
+        thresholdCheck: 'Function called',
+        upperThreshold: sensor.alert_threshold,
+        lowerThreshold: sensor.alert_lower_threshold,
+        currentValue: value,
+        thresholdExceeded: value > (sensor.alert_threshold || 999)
       }
     }, { status: 201 })
 

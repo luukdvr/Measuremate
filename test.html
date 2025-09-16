@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Sensor Data API Test</h1>
+    <button onclick="testAPI()">Test Threshold</button>
+    <pre id="result"></pre>
+
+    <script>
+        async function testAPI() {
+            try {
+                const response = await fetch('http://localhost:3000/api/sensor-data', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer da9104e0-f033-44bf-a572-2ba686e4f3dc',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ value: 35 })
+                });
+                
+                const data = await response.json();
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            }
+        }
+    </script>
+</body>
+</html>
