@@ -70,3 +70,43 @@ CREATE TRIGGER update_measuremates_updated_at
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_measuremates_user_id ON measuremates(user_id);
 CREATE INDEX IF NOT EXISTS idx_sensors_measuremate_id ON sensors(measuremate_id);
+
+-- Create notifications table for email spam prevention
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    sensor_id UUID NOT NULL REFERENCES sensors(id) ON DELETE CASCADE,
+    notification_type TEXT NOT NULL, -- 'threshold_upper', 'threshold_lower'
+    email_sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    threshold_value DECIMAL(10,4) NOT NULL,
+    sensor_value DECIMAL(10,4) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS on notifications table
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+
+-- RLS policies for notifications
+CREATE POLICY "Users can view their own notifications" ON notifications
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "System can insert notifications" ON notifications
+    FOR INSERT WITH CHECK (true); -- Allow system inserts
+
+-- Create indexes for notifications
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_sensor_id ON notifications(sensor_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_email_sent_at ON notifications(email_sent_at);
+
+-- Function to check if we can send notification (max 1 per 30 minutes per user)
+CREATE OR REPLACE FUNCTION can_send_notification(p_user_id UUID)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- Check if last notification for this user was more than 30 minutes ago
+    RETURN NOT EXISTS (
+        SELECT 1 FROM notifications 
+        WHERE user_id = p_user_id 
+        AND email_sent_at > NOW() - INTERVAL '30 minutes'
+    );
+END;
+$$ LANGUAGE plpgsql;

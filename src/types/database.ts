@@ -100,6 +100,38 @@ export interface Database {
           created_at?: string
         }
       }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          sensor_id: string
+          notification_type: string
+          email_sent_at: string
+          threshold_value: number
+          sensor_value: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          sensor_id: string
+          notification_type: string
+          email_sent_at?: string
+          threshold_value: number
+          sensor_value: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          sensor_id?: string
+          notification_type?: string
+          email_sent_at?: string
+          threshold_value?: number
+          sensor_value?: number
+          created_at?: string
+        }
+      }
     }
   }
 }
@@ -107,6 +139,8 @@ export interface Database {
 export type Measuremate = Database['public']['Tables']['measuremates']['Row']
 export type Sensor = Database['public']['Tables']['sensors']['Row']
 export type SensorData = Database['public']['Tables']['sensor_data']['Row']
+export type Notification = Database['public']['Tables']['notifications']['Row']
 export type NewMeasuremate = Database['public']['Tables']['measuremates']['Insert']
 export type NewSensor = Database['public']['Tables']['sensors']['Insert']
 export type NewSensorData = Database['public']['Tables']['sensor_data']['Insert']
+export type NewNotification = Database['public']['Tables']['notifications']['Insert']

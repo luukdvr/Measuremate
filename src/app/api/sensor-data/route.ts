@@ -1,6 +1,99 @@
 import { createClient } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 
+interface SensorWithMeasuremate {
+  id: string
+  name: string
+  user_id: string
+  measuremate_id: string
+  alert_threshold: number | null
+  alert_lower_threshold: number | null
+  measuremates: {
+    name: string
+  }[]
+}
+
+// Helper function to check thresholds and send notifications
+async function checkThresholdsAndNotify(sensor: SensorWithMeasuremate, currentValue: number) {
+  try {
+    // Only check if thresholds are set
+    const upperThreshold = sensor.alert_threshold
+    const lowerThreshold = sensor.alert_lower_threshold
+    
+    if (!upperThreshold && !lowerThreshold) {
+      return // No thresholds set
+    }
+
+    let notificationType: string | null = null
+    let thresholdValue: number | null = null
+
+    // Check upper threshold
+    if (upperThreshold && currentValue > upperThreshold) {
+      notificationType = 'upper'
+      thresholdValue = upperThreshold
+    }
+    // Check lower threshold
+    else if (lowerThreshold && currentValue < lowerThreshold) {
+      notificationType = 'lower' 
+      thresholdValue = lowerThreshold
+    }
+
+    if (!notificationType || !thresholdValue) {
+      return // No threshold exceeded
+    }
+
+    // Get user email
+    const { createClient: createServiceClient } = await import('@supabase/supabase-js')
+    const supabaseService = createServiceClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
+    )
+
+    const { data: user } = await supabaseService.auth.admin.getUserById(sensor.user_id)
+    
+    if (!user?.user?.email) {
+      console.error('No email found for user:', sensor.user_id)
+      return
+    }
+
+    // Send notification via internal API
+    const notificationPayload = {
+      userId: sensor.user_id,
+      sensorId: sensor.id,
+      sensorName: sensor.name,
+      measuremateName: sensor.measuremates?.[0]?.name,
+      currentValue,
+      thresholdValue,
+      thresholdType: notificationType,
+      userEmail: user.user.email
+    }
+
+    const notificationResponse = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/send-notification`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.INTERNAL_API_KEY}`
+      },
+      body: JSON.stringify(notificationPayload)
+    })
+
+    if (!notificationResponse.ok) {
+      const error = await notificationResponse.text()
+      console.error('Notification send failed:', error)
+    }
+
+  } catch (error) {
+    console.error('Error in threshold check:', error)
+    // Don't throw - notification failure shouldn't break sensor data insert
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get the API key from Authorization header
@@ -39,10 +132,14 @@ export async function POST(request: NextRequest) {
       }
     )
 
-    // Find sensor by API key using service role
+    // Find sensor by API key using service role (include threshold settings)
     const { data: sensor, error: sensorError } = await supabaseService
       .from('sensors')
-      .select('id, user_id, name')
+      .select(`
+        id, user_id, name, measuremate_id,
+        alert_threshold, alert_lower_threshold,
+        measuremates(name)
+      `)
       .eq('api_key', apiKey)
       .single()
 
@@ -75,6 +172,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    // Check thresholds and trigger notifications if needed
+    await checkThresholdsAndNotify(sensor, value)
 
     return NextResponse.json({
       success: true,

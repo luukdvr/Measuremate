@@ -39,8 +39,25 @@ Maak .env.local aan (zie ook .env.local.example):
 - NEXT_PUBLIC_SUPABASE_ANON_KEY
 - SUPABASE_SERVICE_ROLE_KEY  (alleen server-side; nooit naar de browser lekken)
 - NEXT_PUBLIC_SITE_URL       (bijv. https://measuremate.vercel.app)
+- **NOTIFICATIONAPI_CLIENT_ID**    (voor email notificaties)
+- **NOTIFICATIONAPI_CLIENT_SECRET** (voor email notificaties)
+- **INTERNAL_API_KEY**              (beveiligt interne notification API)
 
 Beveiliging: roteer SUPABASE_SERVICE_ROLE_KEY als deze ooit is blootgesteld en werk de Vercel-omgevingen bij.
+
+## Email Notificaties
+Het systeem stuurt automatisch email alerts wanneer sensor waarden drempelwaardes overschrijden:
+- **Spam preventie**: Maximaal 1 email per gebruiker per 30 minuten
+- **Service**: Gebruikt NotificationAPI voor betrouwbare email delivery
+- **Templates**: Configureerbare email templates via NotificationAPI dashboard
+- **Real-time**: Controles gebeuren bij elke sensor data upload
+
+### Configuratie Email Service
+1. Maak een account bij [NotificationAPI](https://www.notificationapi.com)
+2. Maak een nieuw project aan
+3. Kopieer je Client ID en Client Secret uit het dashboard
+4. Voeg `NOTIFICATIONAPI_CLIENT_ID` en `NOTIFICATIONAPI_CLIENT_SECRET` toe aan environment variables
+5. Configureer een notification template met ID `sensor_threshold_alert` in het dashboard
 
 ## Lokaal draaien
 Vereisten: Node 18+, npm
@@ -190,8 +207,41 @@ Main components:
 - SensorChart: line chart with span gaps, hard y min/max, dashed threshold lines.
 
 ## Deployment
-- Vercel project connected to this repo; see DEPLOYMENT.md.
-- Set env vars in Vercel → Project Settings → Environment Variables.
+Voor production deployment op Vercel:
+
+### 1. Database Setup
+Voer de database migraties uit in Supabase SQL Editor:
+```sql
+-- Run the contents of database-setup.sql
+-- Dit voegt measuremates table, notifications table en can_send_notification() functie toe
+```
+
+### 2. Environment Variables in Vercel
+Ga naar Project Settings → Environment Variables en voeg toe:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` 
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SITE_URL`
+- `NOTIFICATIONAPI_CLIENT_ID` (voor email notificaties)
+- `NOTIFICATIONAPI_CLIENT_SECRET` (voor email notificaties)
+- `INTERNAL_API_KEY` (beveiligt notification API)
+
+### 3. Email Service Setup
+1. Registreer bij [NotificationAPI](https://www.notificationapi.com)
+2. Maak een nieuw project aan in het dashboard
+3. Kopieer Client ID en Client Secret uit Project Settings
+4. Voeg credentials toe als environment variables
+5. Configureer notification template met ID `sensor_threshold_alert`:
+   - Subject: `🚨 Sensor Alert: {{sensorName}} {{thresholdTypeText}} {{exceedsText}}`
+   - Body: Gebruik merge tags zoals `{{measuremateName}}`, `{{currentValue}}`, `{{thresholdValue}}`, etc.
+6. Test email verzending met een sensor threshold alert
+
+### 4. Deploy & Test
+- Push naar GitHub triggert automatisch Vercel deployment
+- Test de complete flow: Arduino → sensor data → threshold → email alert
+- Controleer spam preventie: max 1 email per 30 minuten per gebruiker
+
+Zie ook DEPLOYMENT.md voor gedetailleerde instructies.
 
 ## Current status
 - Working: ingestion API with service role, chart with time ranges and thresholds, SSR-safe UI.
