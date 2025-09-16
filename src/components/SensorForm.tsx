@@ -6,11 +6,12 @@ import { Sensor } from '@/types/database'
 import { v4 as uuidv4 } from 'uuid'
 
 interface SensorFormProps {
+  measuremateId: string
   onSensorAdded: (sensor: Sensor) => void
   onCancel: () => void
 }
 
-export default function SensorForm({ onSensorAdded, onCancel }: SensorFormProps) {
+export default function SensorForm({ measuremateId, onSensorAdded, onCancel }: SensorFormProps) {
   const [name, setName] = useState('')
   const [scale, setScale] = useState('') // New state for scale (string input)
   const [loading, setLoading] = useState(false)
@@ -44,6 +45,7 @@ export default function SensorForm({ onSensorAdded, onCancel }: SensorFormProps)
         .from('sensors')
         .insert({
           user_id: user.id,
+          measuremate_id: measuremateId,
           name: name.trim(),
           api_key: apiKey,
           scale: scaleNumber,

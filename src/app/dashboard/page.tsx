@@ -13,7 +13,7 @@ export default async function Dashboard() {
     redirect('/auth/signin')
   }
 
-  // Fetch user's sensors
+  // Fetch all user's sensors (they will be filtered by Measuremate in the client)
   const { data: sensors } = await supabase
     .from('sensors')
     .select('*')

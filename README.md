@@ -12,26 +12,28 @@ Repository: https://github.com/luukdvr/Measuremate
 - Devices: Arduino UNO R4 WiFi, ESP32 (DS18B20-sensor)
 
 ## Architectuuroverzicht
+- **Multi-tenant hiërarchie**: Elk account kan meerdere "Measuremates" hebben (bijv. verschillende locaties), en elke Measuremate kan meerdere sensors bevatten.
 - POST /api/sensor-data ontvangt metingen met een per-sensor API-sleutel (Authorization: Bearer <key>). De API gebruikt server-side de Supabase service role om RLS te omzeilen voor inserts.
-- De UI toont per sensor een live grafiek met:
-	- Vaste y-as schaal (max: scale, min: scaleMin)
-	- Tijdsbereiken met bucketting; toont de laatste meting per bucket
-	- Boven-/ondergrens drempels als gestippelde lijnen en banners
+- De UI toont eerst Measuremate-selectie, dan per sensor een live grafiek met:
+  - Vaste y-as schaal (max: scale, min: scaleMin)
+  - Tijdsbereiken met bucketting; toont de laatste meting per bucket
+  - Boven-/ondergrens drempels als gestippelde lijnen en banners
 - Realtime: abonneert op nieuwe inserts voor directe UI-updates.
 
 ## Datamodel (Supabase)
-- sensors
-	- id, user_id, name, api_key
-	- scale (number|null), scaleMin (number|null)
-	- tijdScale (string|null)
-	- alert_threshold (number|null), alert_lower_threshold (number|null)
-	- created_at, updated_at
-- sensor_data
-	- id, sensor_id, user_id, timestamp, value, created_at
+- **measuremates** (nieuw!)
+  - id, user_id, name, description, location
+  - created_at, updated_at
+- **sensors** (uitgebreid)
+  - id, user_id, **measuremate_id** (foreign key), name, api_key
+  - scale (number|null), scaleMin (number|null)
+  - tijdScale (string|null)
+  - alert_threshold (number|null), alert_lower_threshold (number|null)
+  - created_at, updated_at
+- **sensor_data** (ongewijzigd)
+  - id, sensor_id, user_id, timestamp, value, created_at
 
-Zie SUPABASE_SETUP.md en database-setup.sql voor schema/migraties.
-
-## Omgevingsvariabelen
+Zie database-setup.sql voor schema/migraties en MEASUREMATE_MIGRATION.md voor upgrade-instructies.## Omgevingsvariabelen
 Maak .env.local aan (zie ook .env.local.example):
 - NEXT_PUBLIC_SUPABASE_URL
 - NEXT_PUBLIC_SUPABASE_ANON_KEY

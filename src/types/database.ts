@@ -1,10 +1,40 @@
 export interface Database {
   public: {
     Tables: {
+      measuremates: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          description: string | null
+          location: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          description?: string | null
+          location?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          description?: string | null
+          location?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       sensors: {
         Row: {
           id: string
           user_id: string
+          measuremate_id: string
           name: string
           api_key: string
           scale: number | null
@@ -18,6 +48,7 @@ export interface Database {
         Insert: {
           id?: string
           user_id: string
+          measuremate_id: string
           name: string
           api_key?: string
           scale?: number | null
@@ -31,6 +62,7 @@ export interface Database {
         Update: {
           id?: string
           user_id?: string
+          measuremate_id?: string
           name?: string
           api_key?: string
           scale?: number | null
@@ -72,7 +104,9 @@ export interface Database {
   }
 }
 
+export type Measuremate = Database['public']['Tables']['measuremates']['Row']
 export type Sensor = Database['public']['Tables']['sensors']['Row']
 export type SensorData = Database['public']['Tables']['sensor_data']['Row']
+export type NewMeasuremate = Database['public']['Tables']['measuremates']['Insert']
 export type NewSensor = Database['public']['Tables']['sensors']['Insert']
 export type NewSensorData = Database['public']['Tables']['sensor_data']['Insert']
