@@ -29,6 +29,7 @@ ChartJS.register(
 )
 
 interface ChartPoint { timestamp: string; value: number | null }
+interface ManualPoint { timestamp: string; value: number; notes?: string | null }
 
 interface SensorChartProps {
   data: ChartPoint[]
@@ -37,9 +38,10 @@ interface SensorChartProps {
   xFormat?: string
   thresholdUpper?: number
   thresholdLower?: number
+  manualData?: ManualPoint[]
 }
 
-export default function SensorChart({ data, yMax, yMin, xFormat = 'HH:mm:ss', thresholdUpper, thresholdLower }: SensorChartProps) {
+export default function SensorChart({ data, yMax, yMin, xFormat = 'HH:mm:ss', thresholdUpper, thresholdLower, manualData }: SensorChartProps) {
   const chartRef = useRef<ChartJS<'line', (number | null)[], string>>(null)
 
   // Sort data by timestamp ascending
@@ -94,6 +96,28 @@ export default function SensorChart({ data, yMax, yMin, xFormat = 'HH:mm:ss', th
         tension: 0,
         borderDash: [4, 4],
       }] : []),
+      ...(manualData && manualData.length > 0 ? [{
+        label: 'Handmatig',
+        data: sortedData.map(item => {
+          const ts = new Date(item.timestamp).getTime()
+          const match = manualData.find(m => {
+            const mt = new Date(m.timestamp).getTime()
+            return Math.abs(mt - ts) < (sortedData.length > 1
+              ? Math.abs(new Date(sortedData[1].timestamp).getTime() - new Date(sortedData[0].timestamp).getTime()) / 2
+              : 60000)
+          })
+          return match ? match.value : null
+        }),
+        borderColor: 'transparent',
+        backgroundColor: 'rgba(16, 185, 129, 0.9)',
+        borderWidth: 0,
+        pointRadius: 6,
+        pointHoverRadius: 8,
+        pointStyle: 'circle' as const,
+        fill: false,
+        showLine: false,
+        spanGaps: false,
+      }] : []),
     ],
   }
 
@@ -109,7 +133,13 @@ export default function SensorChart({ data, yMax, yMin, xFormat = 'HH:mm:ss', th
     },
     plugins: {
       legend: {
-        display: false,
+        display: !!(manualData && manualData.length > 0),
+        labels: {
+          filter: (item: { text: string }) => item.text === 'Waarde' || item.text === 'Handmatig',
+          usePointStyle: true,
+          pointStyle: 'circle',
+          font: { size: 11 },
+        },
       },
       tooltip: {
         callbacks: {
@@ -119,6 +149,15 @@ export default function SensorChart({ data, yMax, yMin, xFormat = 'HH:mm:ss', th
             return format(new Date(timestamp), 'dd/MM/yyyy HH:mm', { locale: nl })
           },
           label: function(context: TooltipItem<'line'>) {
+            if (context.dataset.label === 'Handmatig') {
+              const ts = new Date(sortedData[context.dataIndex].timestamp).getTime()
+              const match = manualData?.find(m => {
+                const mt = new Date(m.timestamp).getTime()
+                return Math.abs(mt - ts) < 120000
+              })
+              const note = match?.notes ? ` — ${match.notes}` : ''
+              return `Handmatig: ${context.parsed.y.toFixed(2)}${note}`
+            }
             return `Waarde: ${context.parsed.y.toFixed(2)}`
           },
         },

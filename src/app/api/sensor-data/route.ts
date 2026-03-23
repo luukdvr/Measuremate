@@ -15,24 +15,12 @@ interface SensorWithMeasuremate {
 
 // Helper function to check thresholds and send notifications
 async function checkThresholdsAndNotify(sensor: SensorWithMeasuremate, currentValue: number) {
-  console.log('🎯 ENTERED checkThresholdsAndNotify function')
-  
   try {
-    // Only check if thresholds are set
     const upperThreshold = sensor.alert_threshold
     const lowerThreshold = sensor.alert_lower_threshold
-    
-    console.log('📊 Threshold values:', { 
-      upper: upperThreshold, 
-      lower: lowerThreshold, 
-      current: currentValue,
-      upperType: typeof upperThreshold,
-      currentType: typeof currentValue 
-    })
-    
+
     if (!upperThreshold && !lowerThreshold) {
-      console.log('⚠️ No thresholds set - exiting')
-      return // No thresholds set
+      return
     }
 
     let notificationType: string | null = null
@@ -184,14 +172,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Update measuremate last_data_received_at
+    await supabaseService
+      .from('measuremates')
+      .update({ last_data_received_at: recordTimestamp })
+      .eq('id', sensor.measuremate_id)
+
     // Check thresholds and trigger notifications if needed
-    console.log('🧪 About to check thresholds for:', {
-      sensorName: sensor.name,
-      value,
-      upperThreshold: sensor.alert_threshold,
-      lowerThreshold: sensor.alert_lower_threshold
-    })
-    
     await checkThresholdsAndNotify(sensor, value)
 
     return NextResponse.json({
@@ -203,13 +190,6 @@ export async function POST(request: NextRequest) {
         value: value,
         timestamp: recordTimestamp,
       },
-      debugInfo: {
-        thresholdCheck: 'Function called',
-        upperThreshold: sensor.alert_threshold,
-        lowerThreshold: sensor.alert_lower_threshold,
-        currentValue: value,
-        thresholdExceeded: value > (sensor.alert_threshold || 999)
-      }
     }, { status: 201 })
 
   } catch (error) {
@@ -239,7 +219,7 @@ export async function GET(request: NextRequest) {
 
     const { data, error } = await supabase
       .from('sensor_data')
-      .select('*')
+      .select('id, sensor_id, value, timestamp')
       .eq('sensor_id', sensorId)
       .order('timestamp', { ascending: false })
       .limit(limit)
