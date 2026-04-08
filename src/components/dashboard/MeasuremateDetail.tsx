@@ -14,7 +14,9 @@ import {
   Edit3,
   Save,
   X,
+  Copy,
 } from 'lucide-react'
+import CopySensorsModal from './CopySensorsModal'
 import { formatDistanceToNow } from 'date-fns'
 import { nl } from 'date-fns/locale'
 
@@ -27,6 +29,7 @@ export default function MeasuremateDetail({ measuremateId }: MeasuremateDetailPr
   const [sensors, setSensors] = useState<Sensor[]>([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
+  const [showCopyModal, setShowCopyModal] = useState(false)
   const [editing, setEditing] = useState(false)
   const [editData, setEditData] = useState({ name: '', description: '', location: '', latitude: '', longitude: '' })
   const supabase = createClient()
@@ -59,6 +62,11 @@ export default function MeasuremateDetail({ measuremateId }: MeasuremateDetailPr
   const handleSensorAdded = (sensor: Sensor) => {
     setSensors(prev => [sensor, ...prev])
     setShowForm(false)
+  }
+
+  const handleSensorsCopied = (copiedSensors: Sensor[]) => {
+    setSensors(prev => [...copiedSensors.reverse(), ...prev])
+    setShowCopyModal(false)
   }
 
   const handleSensorDeleted = (sensorId: string) => {
@@ -219,13 +227,22 @@ export default function MeasuremateDetail({ measuremateId }: MeasuremateDetailPr
         <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
           Sensoren ({sensors.length})
         </h3>
-        <button
-          onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Sensor Toevoegen
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowCopyModal(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg transition-colors"
+          >
+            <Copy className="w-4 h-4" />
+            Sensoren Kopieren
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Sensor Toevoegen
+          </button>
+        </div>
       </div>
 
       {/* Add Sensor Form */}
@@ -234,6 +251,17 @@ export default function MeasuremateDetail({ measuremateId }: MeasuremateDetailPr
           measuremateId={measuremateId}
           onSensorAdded={handleSensorAdded}
           onCancel={() => setShowForm(false)}
+        />
+      )}
+
+      {/* Copy Sensors Modal */}
+      {showCopyModal && (
+        <CopySensorsModal
+          measuremateId={measuremateId}
+          measuremates={measuremates}
+          userId={user.id}
+          onSensorsCopied={handleSensorsCopied}
+          onClose={() => setShowCopyModal(false)}
         />
       )}
 
